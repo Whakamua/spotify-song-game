@@ -7,18 +7,13 @@ document.getElementById("login").addEventListener("click", () => {
     window.location.href = `${authEndpoint}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes.join("%20")}&response_type=token`;
 });
 
-// Extract access token from URL
-const getToken = () => {
-    const hash = window.location.hash.substring(1).split("&").reduce((acc, item) => {
-        let [key, value] = item.split("=");
-        acc[key] = decodeURIComponent(value);
-        return acc;
-    }, {});
-    return hash.access_token;
-};
+const getToken = () => localStorage.getItem("spotify_token");
 
 // Fetch user's top songs
-const fetchTopSongs = async (token) => {
+const fetchTopSongs = async () => {
+    const token = getToken();
+    if (!token) return;
+
     const response = await fetch("https://api.spotify.com/v1/me/top/tracks?limit=10", {
         headers: { Authorization: `Bearer ${token}` }
     });
@@ -28,9 +23,12 @@ const fetchTopSongs = async (token) => {
 // Generate a quiz question
 const generateQuiz = async () => {
     const token = getToken();
-    if (!token) return;
+    if (!token) {
+        document.getElementById("game").innerHTML = "<p>Please log in first.</p>";
+        return;
+    }
 
-    const data = await fetchTopSongs(token);
+    const data = await fetchTopSongs();
     if (!data.items) return;
 
     const song = data.items[Math.floor(Math.random() * data.items.length)];
@@ -40,6 +38,6 @@ const generateQuiz = async () => {
     document.getElementById("game").style.display = "block";
 };
 
-if (window.location.hash) {
+if (getToken()) {
     generateQuiz();
 }
