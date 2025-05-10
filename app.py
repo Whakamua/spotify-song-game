@@ -176,11 +176,13 @@ def game():
                 artist_name = track["artists"][0]["name"]
                 played_at = item["played_at"]  # ISO 8601 string
                 ts = datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
+                track_id = track.get("id")
                 combined.append({
                     "track_name": track_name,
                     "artist_name": artist_name,
                     "player_id": pid,
                     "played_ts": ts,
+                    "track_id": track_id,
                 })
 
     if not combined:
@@ -191,6 +193,7 @@ def game():
     chosen = random.choice(combined)
     song_name = chosen["track_name"]
     artist_name = chosen["artist_name"]
+    track_id = chosen.get("track_id")
 
     # Determine most recent listener for this track across players.
     most_recent = max(
@@ -209,6 +212,7 @@ def game():
         artist_name=artist_name,
         options=options,
         answer=answer_name,
+        track_id=track_id,
     )
 
 
