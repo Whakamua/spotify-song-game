@@ -9,7 +9,7 @@
 </head>
 <body class="bg-light">
     <div class="container py-5">
-        <h2 class="mb-4 text-center">Who has most recently listened to:</h2>
+        <h2 class="mb-4 text-center">{{ question_text }}</h2>
         <h1 class="display-5 text-center text-primary mb-3">{{ song_name }}</h1>
         <h3 class="text-center text-muted mb-5">by {{ artist_name }}</h3>
 
@@ -38,7 +38,14 @@
             </button>
             <div class="collapse mt-3" id="answer">
                 <div class="alert alert-success" role="alert">
-                    <strong>{{ answer }}</strong> listened to this song most recently!
+                    {% if question_type == "recent_listener" %}
+                        <strong>{{ answer }}</strong> listened to this song most recently!
+                    {% elif question_type == "saved_track" %}
+                        <strong>{{ answer }}</strong> most recently added this song to their saved tracks!
+                    {% else %}
+                        <!-- Fallback or error display -->
+                        <strong>{{ answer }}</strong> - Answer details unavailable.
+                    {% endif %}
                 </div>
             </div>
         </div>
