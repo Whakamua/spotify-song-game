@@ -15,14 +15,7 @@
 
         {% if track_id %}
         <div class="text-center mb-4 mx-auto" style="max-width: 380px;">
-            <iframe style="border-radius:12px" 
-                    src="https://open.spotify.com/embed/track/{{ track_id }}?utm_source=generator&autoplay=1"
-                    width="100%" 
-                    height="152"
-                    frameBorder="0" 
-                    allowfullscreen="" 
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                    loading="lazy"></iframe>
+            <div id="spotify-embed-iframe"></div>
         </div>
         {% endif %}
 
@@ -56,5 +49,50 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% if track_id %}
+    <script src="https://open.spotify.com/embed-podcast/iframe-api/v1" async></script>
+    <script>
+        window.onSpotifyIframeApiReady = (IFrameAPI) => {
+            const element = document.getElementById('spotify-embed-iframe');
+            const options = {
+                uri: 'spotify:track:{{ track_id }}',
+                width: '100%',
+                height: '152' // Standard compact embed height
+            };
+            const callback = (EmbedController) => {
+                window.SpotifyEmbedController = EmbedController;
+                
+                let durationMs = 0;
+                let startAtThirdAttempted = false; // Renamed flag for clarity
+
+                EmbedController.addListener('ready', () => {
+                    // Start playback to allow playback_update events to fire and get duration.
+                    EmbedController.play(); 
+                });
+
+                EmbedController.addListener('playback_update', (e) => {
+                    if (e.data.duration > 0 && durationMs === 0) { // Get duration once
+                        durationMs = e.data.duration;
+                    }
+                    
+                    // Once duration is known and we haven't attempted the loadUri with startAt yet.
+                    if (!startAtThirdAttempted && durationMs > 0) {
+                        const startAtSeconds = Math.floor((durationMs / 1000) / 3);
+                        
+                        // Load the URI with the startAt parameter.
+                        // options.uri contains 'spotify:track:{{ track_id }}'
+                        EmbedController.loadUri(options.uri, false, startAtSeconds);
+                        
+                        // As per docs, play() should be called after loadUri with startAt.
+                        EmbedController.play(); 
+
+                        startAtThirdAttempted = true; 
+                    }
+                });
+            };
+            IFrameAPI.createController(element, options, callback);
+        };
+    </script>
+    {% endif %}
 </body>
 </html> 
